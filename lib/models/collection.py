@@ -31,5 +31,6 @@ class Collection:
 
     @classmethod
     def delete(cls, id):
+        from lib.db import CURSOR, CONN
         CURSOR.execute("DELETE FROM collections WHERE id = ?", (id,))
         CONN.commit()
