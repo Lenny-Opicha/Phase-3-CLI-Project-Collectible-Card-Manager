@@ -1,6 +1,21 @@
 import click
 from lib.models.card import Card
 
+def validate_non_empty(value, field_name):
+    if not value.strip():
+        raise click.BadParameter(f"{field_name} cannot be empty")
+    return value.strip()
+
+
+def validate_positive_float(value):
+    try:
+        value = float(value)
+        if value < 0:
+            raise ValueError
+        return value
+    except ValueError:
+        raise click.BadParameter("Estimated value must be a positive number")
+
 
 @click.group()
 def cli():
@@ -65,6 +80,29 @@ def delete_card(card_id):
         click.echo(f"🗑️ Card {card_id} deleted successfully.")
     else:
         click.echo("Card not found.")
+
+@cli.command()
+@click.argument("card_id", type=int)
+def update_card(card_id):
+    """Update a card by ID"""
+
+    name = click.prompt(
+        "New card name",
+        value_proc=lambda v: validate_non_empty(v, "Card name"),
+    )
+
+    rarity = click.prompt(
+        "New rarity",
+        value_proc=lambda v: validate_non_empty(v, "Rarity"),
+    )
+
+    estimated_value = click.prompt(
+        "New estimated value",
+        value_proc=validate_positive_float,
+    )
+
+    Card.update(card_id, name, rarity, estimated_value)
+    click.echo(f"✏️ Card {card_id} updated successfully")
 
 
 if __name__ == "__main__":

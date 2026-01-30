@@ -54,3 +54,15 @@ class Card:
         CURSOR.execute("DELETE FROM cards WHERE id = ?", (card_id,))
         CONN.commit()
         return CURSOR.rowcount
+
+    @classmethod
+    def update(cls, card_id, name, rarity, estimated_value):
+        CURSOR.execute(
+            """
+            UPDATE cards
+            SET name = ?, rarity = ?, estimated_value = ?
+            WHERE id = ?
+            """,
+            (name, rarity, estimated_value, card_id),
+        )
+        CONN.commit()
