@@ -2,54 +2,55 @@ from lib.db import CURSOR, CONN
 
 
 class Card:
-    def __init__(self, id, collection_id, name, description, rarity):
+    def __init__(self, id, name, rarity, estimated_value, collection_id):
         self.id = id
-        self.collection_id = collection_id
         self.name = name
-        self.description = description
         self.rarity = rarity
+        self.estimated_value = estimated_value
+        self.collection_id = collection_id
 
     @classmethod
-    def create(cls, collection_id, name, description, rarity):
+    def create(cls, name, rarity, collection_id, estimated_value):
         CURSOR.execute(
             """
-            INSERT INTO cards (collection_id, name, description, rarity)
+            INSERT INTO cards (name, rarity, estimated_value, collection_id)
             VALUES (?, ?, ?, ?)
             """,
-            (collection_id, name, description, rarity)
+            (name, rarity, estimated_value, collection_id),
         )
         CONN.commit()
 
-        return cls(
-            CURSOR.lastrowid,
-            collection_id,
-            name,
-            description,
-            rarity
-        )
+        id = CURSOR.lastrowid
+        return cls(id, name, rarity, estimated_value, collection_id)
 
     @classmethod
     def get_by_collection(cls, collection_id):
         rows = CURSOR.execute(
-            "SELECT * FROM cards WHERE collection_id = ?",
-            (collection_id,)
+            """
+            SELECT id, name, rarity, estimated_value, collection_id
+            FROM cards
+            WHERE collection_id = ?
+            """,
+            (collection_id,),
         ).fetchall()
 
         return [cls(*row) for row in rows]
 
     @classmethod
-    def find_by_id(cls, id):
-        row = CURSOR.execute(
-            "SELECT * FROM cards WHERE id = ?",
-            (id,)
-        ).fetchone()
+    def find_by_name(cls, name):
+        rows = CURSOR.execute(
+            """
+            SELECT id, name, rarity, estimated_value, collection_id
+            FROM cards
+            WHERE name LIKE ?
+            """,
+            (f"%{name}%",),
+        ).fetchall()
 
-        return cls(*row) if row else None
+        return [cls(*row) for row in rows]
 
     @classmethod
-    def delete(cls, id):
-        CURSOR.execute(
-            "DELETE FROM cards WHERE id = ?",
-            (id,)
-        )
+    def delete(cls, card_id):
+        CURSOR.execute("DELETE FROM cards WHERE id = ?", (card_id,))
         CONN.commit()
+        return CURSOR.rowcount
